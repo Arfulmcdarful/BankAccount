@@ -1,3 +1,8 @@
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+
 public class BankAccountTest extends junit.framework.TestCase
 {
 
@@ -5,6 +10,8 @@ public class BankAccountTest extends junit.framework.TestCase
     BankAccount chequing2;
     BankAccount chequing3;
     
+    Transaction t1;
+        
     protected void setUp()
     {
     	System.out.println("setup");
@@ -15,56 +22,99 @@ public class BankAccountTest extends junit.framework.TestCase
         
     public void testAccessors()
     {
-		assertEquals("chequing2",  chequing2.getAccountNumber());
-		assertEquals(100.0,  chequing2.getBalance(), 0);
-		assertEquals(5.0,  chequing3.getAnnualInterestRate(), 0);
-		assertEquals(2.0,  chequing3.getWithdrawalFee(), 0);
+        assertEquals("chequing2",  chequing2.getAccountNumber());
+        assertEquals(100.0,  chequing2.getBalance(), 0);
+        assertEquals(5.0,  chequing3.getAnnualInterestRate(), 0);
+        assertEquals(2.0,  chequing3.getWithdrawalFee(), 0);
     }
     
     public void testMutators()
     {
-	    //test for setters
-		chequing1.setWithdrawalFee(3.0);
-		chequing1.setAnnualInterestRate(4.0);
-		assertEquals(3.0,  chequing1.getWithdrawalFee(), 0);
-		assertEquals(4.0,  chequing1.getAnnualInterestRate(), 0);
+        //test for setters
+        chequing1.setWithdrawalFee(3.0);
+        chequing1.setAnnualInterestRate(4.0);
+        assertEquals(3.0,  chequing1.getWithdrawalFee(), 0);
+        assertEquals(4.0,  chequing1.getAnnualInterestRate(), 0);
     }
     
     public void testDeposits()
-    {                	
-		//test various deposits and withdrawals
-		chequing1.setWithdrawalFee(3.0);
-		
-		chequing1.deposit(500);
-		assertEquals(500.0,  chequing1.getBalance(), 0);
-			
-		chequing1.withdraw(200);
-		assertEquals(297.0,  chequing1.getBalance(), 0);			
-		assertEquals(false,  chequing1.isOverDrawn());
-					
-		chequing1.withdraw(300);
-		assertEquals(-6.0,  chequing1.getBalance(), 0);
-		assertEquals(true,  chequing1.isOverDrawn());
-		
-    	chequing2.deposit(0.42);
-    	assertEquals(100.42,  chequing2.getBalance(), 0.00);
-    	chequing2.deposit(0.001);
-    	assertEquals(100.421,  chequing2.getBalance(), 0.001);
+    {                   
+        //test various deposits and withdrawals
+        chequing1.setWithdrawalFee(3.0);
+        
+        chequing1.deposit(500, "deposit 1");
+        assertEquals(500.0,  chequing1.getBalance(), 0);
+            
+        chequing1.withdraw(200, "withdrawal 1");
+        assertEquals(297.0,  chequing1.getBalance(), 0);            
+        assertEquals(false,  chequing1.isOverDrawn());
+                    
+        chequing1.withdraw(300,"withdrawal 2");
+        assertEquals(-6.0,  chequing1.getBalance(), 0);
+        assertEquals(true,  chequing1.isOverDrawn());
+        
+        chequing2.deposit(0.42, "deposit 2");
+        assertEquals(100.42,  chequing2.getBalance(), 0.00);
+        chequing2.deposit(0.001,  "deposit 3");
+        assertEquals(100.421,  chequing2.getBalance(), 0.001);
+        
+    }
+
+    public void testToString() {
+        
+        assertEquals("BankAccount chequing1: $0.00",  chequing1.toString());
+        assertEquals("BankAccount chequing2: $100.00",  chequing2.toString());
+        
+        chequing2.deposit(0.42,  "deposit 1");
+        assertEquals("BankAccount chequing2: $100.42",  chequing2.toString());
+
+        chequing2.deposit(0.001, "deposit 2");
+        assertEquals("BankAccount chequing2: $100.42",  chequing2.toString());
+
+        BankAccount chequing4 = new BankAccount("chequing4", -100);
+        assertEquals("BankAccount chequing4: ($100.00)",  chequing4.toString());
     }
     
-    public void testToString() {
-   
-    	assertEquals("BankAccount chequing1: $0.00",  chequing1.toString());
-    	assertEquals("BankAccount chequing2: $100.00",  chequing2.toString());
+    public void testTransactions()
+    {
+    	chequing1.setWithdrawalFee(3.0);
     	
-    	chequing2.deposit(0.42);
-    	assertEquals("BankAccount chequing2: $100.42",  chequing2.toString());
+        LocalDate d1 = LocalDate.of(2000, 12, 31);
+        LocalTime t1 = LocalTime.of(14, 15, 30);    	
+    	LocalDateTime dt1 = LocalDateTime.of(d1, t1);
+    	chequing1.deposit(dt1, 600, "deposit 1");
+    	    	
+        LocalDate d2 = LocalDate.of(2001, 01, 02);
+        LocalTime t2 = LocalTime.of(14, 15, 30);    	
+    	LocalDateTime dt2 = LocalDateTime.of(d2, t2);
+    	chequing1.withdraw(dt2, 200, "withdrawal 1");
+    	
+        LocalDate d3 = LocalDate.of(2001, 01, 01);
+        LocalTime t3 = LocalTime.of(14, 15, 30);    	
+    	LocalDateTime dt3 = LocalDateTime.of(d3, t3);
+    	chequing1.withdraw(dt3, 300, "withdrawal 2");
 
-    	chequing2.deposit(0.001);
-    	assertEquals("BankAccount chequing2: $100.42",  chequing2.toString());
+        LocalDate d4 = LocalDate.of(2001, 01, 03);
+        LocalTime t4 = LocalTime.of(14, 15, 30);    	
+    	LocalDateTime dt4 = LocalDateTime.of(d4, t4);
+    	chequing1.deposit(dt4, 100, "deposit 2");
+    	
+    	//order should be: ["deposit 1"], ["withdrawal 2"], ["withdrawal 1"], ["deposit 2"]
+    	
+    	ArrayList<Transaction> trans1 = chequing1.getTransactions(null, null);
+    	assertEquals(4, trans1.size());
+    	assertEquals(trans1.get(2).getDescription(), "withdrawal 1");
 
-    	BankAccount chequing4 = new BankAccount("chequing4", -100);
-    	assertEquals("BankAccount chequing4: ($100.00)",  chequing4.toString());
+    	ArrayList<Transaction> trans2 = chequing1.getTransactions(dt2, null);
+    	assertEquals(2, trans2.size());
+    	assertEquals(trans2.get(0).getDescription(), "withdrawal 1");
+
+    	ArrayList<Transaction> trans3 = chequing1.getTransactions(null, dt3);
+    	assertEquals(2, trans3.size());
+    	assertEquals(trans3.get(1).getDescription(), "withdrawal 2");
+
+    	ArrayList<Transaction> trans4 = chequing1.getTransactions(dt3, dt2);
+    	assertEquals(2, trans4.size());    	    
     }
    
 }
